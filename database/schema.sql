@@ -1,3 +1,19 @@
+-- 商品分類表
+CREATE TABLE categories (
+    category_id INT IDENTITY(1,1) PRIMARY KEY, -- 自動遞增主鍵
+    name NVARCHAR(50) NOT NULL UNIQUE,        -- 分類名稱
+    description NVARCHAR(255),                -- 分類描述
+    created_at DATETIME DEFAULT GETDATE(),    -- 建立時間
+    updated_at DATETIME DEFAULT GETDATE()     -- 更新時間
+);
+
+-- 修改商品表，新增 category_id 外鍵
+ALTER TABLE products
+ADD category_id INT;
+
+ALTER TABLE products
+ADD CONSTRAINT FK_products_category FOREIGN KEY (category_id) REFERENCES categories(category_id);
+
 -- 商品資料表
 CREATE TABLE products (
     product_id INT IDENTITY(1,1) PRIMARY KEY, -- 自動遞增主鍵

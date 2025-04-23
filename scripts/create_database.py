@@ -11,90 +11,124 @@ database = os.getenv("DB_DATABASE")
 username = os.getenv("DB_USERNAME")
 password = os.getenv("DB_PASSWORD")
 
-# SQL 腳本內容
-sql_script = """
+# 刪除資料表的 SQL 腳本
+drop_tables_script = """
+DROP TABLE IF EXISTS order_items;
+DROP TABLE IF EXISTS payments;
+DROP TABLE IF EXISTS orders;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS categories;
+DROP TABLE IF EXISTS users;
+"""
+
+# 建立資料表的 SQL 腳本
+create_tables_script = """
+-- 用戶資料表
+CREATE TABLE users (
+    user_id INT IDENTITY(1,1) PRIMARY KEY,
+    username NVARCHAR(50) NOT NULL UNIQUE,
+    password NVARCHAR(255) NOT NULL,
+    email NVARCHAR(100) NOT NULL UNIQUE,
+    created_at DATETIME DEFAULT GETDATE(),
+    updated_at DATETIME DEFAULT GETDATE()
+);
+
+-- 商品分類表
+CREATE TABLE categories (
+    category_id INT IDENTITY(1,1) PRIMARY KEY,
+    name NVARCHAR(50) NOT NULL UNIQUE,
+    description NVARCHAR(255),
+    created_at DATETIME DEFAULT GETDATE(),
+    updated_at DATETIME DEFAULT GETDATE()
+);
+
 -- 商品資料表
 CREATE TABLE products (
-    product_id INT IDENTITY(1,1) PRIMARY KEY, -- 自動遞增主鍵
-    name NVARCHAR(100) NOT NULL,             -- 商品名稱
-    price DECIMAL(10, 2) NOT NULL,           -- 商品價格
-    description NVARCHAR(255),               -- 商品描述
-    created_at DATETIME DEFAULT GETDATE(),   -- 建立時間
-    updated_at DATETIME DEFAULT GETDATE()    -- 更新時間
+    product_id INT IDENTITY(1,1) PRIMARY KEY,
+    name NVARCHAR(100) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    description NVARCHAR(255),
+    stock INT NOT NULL DEFAULT 0,
+    category_id INT,
+    created_at DATETIME DEFAULT GETDATE(),
+    updated_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (category_id) REFERENCES categories(category_id)
 );
 
 -- 訂單資料表
 CREATE TABLE orders (
-    order_id INT IDENTITY(1,1) PRIMARY KEY,  -- 自動遞增主鍵
-    user_id INT NOT NULL,                    -- 用戶 ID（假設外部系統管理用戶）
-    order_date DATETIME DEFAULT GETDATE(),   -- 訂單日期
-    total_amount DECIMAL(10, 2) NOT NULL,    -- 訂單總金額
-    status NVARCHAR(50) DEFAULT 'Pending',   -- 訂單狀態（預設為 Pending）
-    created_at DATETIME DEFAULT GETDATE(),   -- 建立時間
-    updated_at DATETIME DEFAULT GETDATE()    -- 更新時間
+    order_id INT IDENTITY(1,1) PRIMARY KEY,
+    user_id INT NOT NULL,
+    total_price DECIMAL(10, 2) NOT NULL,
+    status NVARCHAR(20) DEFAULT 'pending',
+    created_at DATETIME DEFAULT GETDATE(),
+    updated_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (user_id) REFERENCES users(user_id)
 );
 
--- 訂單商品中介資料表
+-- 訂單項目資料表
 CREATE TABLE order_items (
-    order_item_id INT IDENTITY(1,1) PRIMARY KEY, -- 自動遞增主鍵
-    order_id INT NOT NULL,                       -- 訂單編號（外鍵）
-    product_id INT NOT NULL,                     -- 商品編號（外鍵）
-    quantity INT NOT NULL,                       -- 商品數量
-    price DECIMAL(10, 2) NOT NULL,               -- 單價（當前商品價格）
-    created_at DATETIME DEFAULT GETDATE(),       -- 建立時間
-    updated_at DATETIME DEFAULT GETDATE()        -- 更新時間
+    order_item_id INT IDENTITY(1,1) PRIMARY KEY,
+    order_id INT NOT NULL,
+    product_id INT NOT NULL,
+    quantity INT NOT NULL,
+    price DECIMAL(10, 2) NOT NULL,
+    FOREIGN KEY (order_id) REFERENCES orders(order_id),
+    FOREIGN KEY (product_id) REFERENCES products(product_id)
 );
 
--- 交易資料表
-CREATE TABLE transactions (
-    transaction_id INT IDENTITY(1,1) PRIMARY KEY, -- 自動遞增主鍵
-    order_id INT NOT NULL,                        -- 訂單編號（外鍵）
-    payment_status NVARCHAR(50) NOT NULL,         -- 付款狀態（如 Paid, Failed）
-    payment_date DATETIME DEFAULT GETDATE(),      -- 付款日期
-    amount DECIMAL(10, 2) NOT NULL,               -- 交易金額
-    created_at DATETIME DEFAULT GETDATE(),        -- 建立時間
-    updated_at DATETIME DEFAULT GETDATE()         -- 更新時間
+-- 付款資料表
+CREATE TABLE payments (
+    payment_id INT IDENTITY(1,1) PRIMARY KEY,
+    order_id INT NOT NULL,
+    payment_method NVARCHAR(50) NOT NULL,
+    status NVARCHAR(20) DEFAULT 'unpaid',
+    transaction_id NVARCHAR(100),
+    created_at DATETIME DEFAULT GETDATE(),
+    FOREIGN KEY (order_id) REFERENCES orders(order_id)
 );
-
--- 外鍵約束
-ALTER TABLE order_items
-ADD CONSTRAINT FK_order_items_order FOREIGN KEY (order_id) REFERENCES orders(order_id);
-
-ALTER TABLE order_items
-ADD CONSTRAINT FK_order_items_product FOREIGN KEY (product_id) REFERENCES products(product_id);
-
-ALTER TABLE transactions
-ADD CONSTRAINT FK_transactions_order FOREIGN KEY (order_id) REFERENCES orders(order_id);
 """
 
-# 建立資料庫連線並執行腳本
-def execute_sql_script():
+# 執行 SQL 腳本的函式
+def execute_sql_script(script, connection):
+    cursor = connection.cursor()
     try:
-        # 建立連線
-        connection = pyodbc.connect(
-            f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password}"
-        )
-        cursor = connection.cursor()
-        print("成功連接到資料庫！")
-
-        # 執行 SQL 腳本
-        for statement in sql_script.split(";"):
+        for statement in script.split(";"):
             if statement.strip():
                 cursor.execute(statement)
                 print(f"執行成功: {statement.strip()[:50]}...")
-
-        # 提交變更
         connection.commit()
-        print("資料表與外鍵約束已成功建立！")
+    except Exception as e:
+        print(f"執行過程中發生錯誤: {e}")
+    finally:
+        cursor.close()
+
+# 主程式
+def main():
+    try:
+        # 建立資料庫連線
+        connection = pyodbc.connect(
+            f"DRIVER={{ODBC Driver 17 for SQL Server}};SERVER={server};DATABASE={database};UID={username};PWD={password}"
+        )
+        print("成功連接到資料庫！")
+
+        # 刪除現有資料表
+        print("正在刪除現有資料表...")
+        execute_sql_script(drop_tables_script, connection)
+
+        # 建立新的資料表
+        print("正在建立新的資料表...")
+        execute_sql_script(create_tables_script, connection)
+
+        print("資料表已成功重建！")
 
     except Exception as e:
         print(f"執行過程中發生錯誤: {e}")
     finally:
-        # 關閉連線
-        cursor.close()
-        connection.close()
-        print("資料庫連線已關閉。")
+        if 'connection' in locals():
+            connection.close()
+            print("資料庫連線已關閉。")
 
-# 執行腳本
+# 執行主程式
 if __name__ == "__main__":
-    execute_sql_script()
+    main()
