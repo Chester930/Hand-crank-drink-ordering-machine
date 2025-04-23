@@ -1,0 +1,44 @@
+# 資料庫相關函式庫
+pyodbc==4.0.35
+
+# 環境變數管理
+python-dotenv==1.0.0
+
+# 測試相關函式庫
+pytest==7.4.0
+pytest-mock==3.11.1
+
+# 資料驗證與處理
+pydantic==1.10.9
+
+# 日誌記錄
+loguru==0.7.0
+
+# SQLAlchemy ORM（選用，若需要更高層次的資料庫操作）
+SQLAlchemy==2.0.20
+
+# Flask（若需要建立簡單的後端 API）
+Flask==2.3.2
+Flask-SQLAlchemy==3.0.5
+
+# FastAPI（若需要建立更現代化的後端 API）
+fastapi==0.100.0
+uvicorn==0.23.2
+
+# 測試與模擬資料庫
+pytest-asyncio==0.21.0
+factory-boy==3.3.0
+
+# 安全性相關
+bcrypt==4.0.1
+python-jose==3.3.0
+
+# 開發工具
+black==23.3.0
+isort==5.12.0
+mypy==1.5.1
+flake8==6.1.0
+
+# 文件生成
+mkdocs==1.4.3
+mkdocs-material==9.1.15
