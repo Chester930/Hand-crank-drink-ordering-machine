@@ -1,0 +1,106 @@
+# Python Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C Extensions
+*.so
+
+# Virtual Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Environment Config
+*.env
+.env.*
+.envrc
+
+# IDE / Editor Files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Packaging
+*.egg
+*.egg-info/
+dist/
+build/
+.eggs/
+*.manifest
+*.spec
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Test / Coverage
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+htmlcov/
+.tox/
+.pytest_cache/
+.hypothesis/
+.dmypy.json
+.mypy_cache/
+.pytype/
+.pyre/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Logs
+*.log
+logs/
+
+# Static Files / Output
+outputs/
+upload_tmp/
+tmp/
+*.tmp
+*.bak
+
+# Documentation
+docs/_build/
+site/
+
+# Web Frameworks
+instance/
+.webassets-cache
+db.sqlite3
+db.sqlite3-journal
+local_settings.py
+
+# Rope / Spyder / PyCharm
+.spyderproject
+.spyproject
+.ropeproject
+
+# Others
+__pypackages__/
+cython_debug/
+.pdm.toml
+.pdm-python
+.pdm-build/
+.ruff_cache/
+.pypirc
+
+# Additional Rules
+*.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.orig
+*.rej
+*.bak
+*.tmp
+*.log
+*.crt
+*.pem
+*.key
