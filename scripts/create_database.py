@@ -11,19 +11,10 @@ database = os.getenv("DB_DATABASE")
 username = os.getenv("DB_USERNAME")
 password = os.getenv("DB_PASSWORD")
 
-# 刪除資料表的 SQL 腳本
-drop_tables_script = """
-DROP TABLE IF EXISTS order_items;
-DROP TABLE IF EXISTS payments;
-DROP TABLE IF EXISTS orders;
-DROP TABLE IF EXISTS products;
-DROP TABLE IF EXISTS categories;
-DROP TABLE IF EXISTS users;
-"""
-
 # 建立資料表的 SQL 腳本
 create_tables_script = """
 -- 用戶資料表
+IF OBJECT_ID('users', 'U') IS NULL
 CREATE TABLE users (
     user_id INT IDENTITY(1,1) PRIMARY KEY,
     username NVARCHAR(50) NOT NULL UNIQUE,
@@ -34,6 +25,7 @@ CREATE TABLE users (
 );
 
 -- 商品分類表
+IF OBJECT_ID('categories', 'U') IS NULL
 CREATE TABLE categories (
     category_id INT IDENTITY(1,1) PRIMARY KEY,
     name NVARCHAR(50) NOT NULL UNIQUE,
@@ -43,6 +35,7 @@ CREATE TABLE categories (
 );
 
 -- 商品資料表
+IF OBJECT_ID('products', 'U') IS NULL
 CREATE TABLE products (
     product_id INT IDENTITY(1,1) PRIMARY KEY,
     name NVARCHAR(100) NOT NULL,
@@ -56,6 +49,7 @@ CREATE TABLE products (
 );
 
 -- 訂單資料表
+IF OBJECT_ID('orders', 'U') IS NULL
 CREATE TABLE orders (
     order_id INT IDENTITY(1,1) PRIMARY KEY,
     user_id INT NOT NULL,
@@ -67,6 +61,7 @@ CREATE TABLE orders (
 );
 
 -- 訂單項目資料表
+IF OBJECT_ID('order_items', 'U') IS NULL
 CREATE TABLE order_items (
     order_item_id INT IDENTITY(1,1) PRIMARY KEY,
     order_id INT NOT NULL,
@@ -78,6 +73,7 @@ CREATE TABLE order_items (
 );
 
 -- 付款資料表
+IF OBJECT_ID('payments', 'U') IS NULL
 CREATE TABLE payments (
     payment_id INT IDENTITY(1,1) PRIMARY KEY,
     order_id INT NOT NULL,
@@ -95,8 +91,13 @@ def execute_sql_script(script, connection):
     try:
         for statement in script.split(";"):
             if statement.strip():
-                cursor.execute(statement)
-                print(f"執行成功: {statement.strip()[:50]}...")
+                try:
+                    cursor.execute(statement)
+                    print(f"執行成功: {statement.strip()[:50]}...")
+                except Exception as e:
+                    print(f"執行失敗: {statement.strip()[:50]}...")
+                    print(f"錯誤訊息: {e}")
+                    print(f"完整 SQL: {statement.strip()}")
         connection.commit()
     except Exception as e:
         print(f"執行過程中發生錯誤: {e}")
@@ -112,15 +113,11 @@ def main():
         )
         print("成功連接到資料庫！")
 
-        # 刪除現有資料表
-        print("正在刪除現有資料表...")
-        execute_sql_script(drop_tables_script, connection)
-
         # 建立新的資料表
         print("正在建立新的資料表...")
         execute_sql_script(create_tables_script, connection)
 
-        print("資料表已成功重建！")
+        print("資料表已成功建立！")
 
     except Exception as e:
         print(f"執行過程中發生錯誤: {e}")
